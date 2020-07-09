@@ -51,30 +51,40 @@ const Dashboard: React.FC = () => {
   >();
   const [searchValue, setSearchValue] = useState('');
 
-  const navigation = useNavigation();
+  const { navigate } = useNavigation();
 
   async function handleNavigate(id: number): Promise<void> {
-    // Navigate do ProductDetails page
+    navigate('FoodDetails', { id });
   }
 
   useEffect(() => {
-    async function loadFoods(): Promise<void> {
-      // Load Foods from API
+    async function loadDashboard(): Promise<void> {
+      const params = {
+        category_like: selectedCategory,
+        name_like: searchValue,
+      };
+
+      const foodResponse = await api.get<Food[]>('/foods', { params });
+
+      const foodsFormatted = foodResponse.data.map(food => {
+        return { ...food, formattedPrice: formatValue(food.price) };
+      });
+
+      const categoriesResponse = await api.get<Category[]>('/categories');
+
+      setCategories(categoriesResponse.data);
+      setFoods(foodsFormatted);
     }
 
-    loadFoods();
+    loadDashboard();
   }, [selectedCategory, searchValue]);
 
-  useEffect(() => {
-    async function loadCategories(): Promise<void> {
-      // Load categories from API
-    }
-
-    loadCategories();
-  }, []);
-
   function handleSelectCategory(id: number): void {
-    // Select / deselect category
+    if (selectedCategory === id) {
+      setSelectedCategory(undefined);
+    } else {
+      setSelectedCategory(id);
+    }
   }
 
   return (
@@ -85,7 +95,7 @@ const Dashboard: React.FC = () => {
           name="log-out"
           size={24}
           color="#FFB84D"
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigate('Home')}
         />
       </Header>
       <FilterContainer>
